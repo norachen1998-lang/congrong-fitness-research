@@ -6,3 +6,9 @@ data/webhook.txt
 node_modules/
 congrong-fitness.zip
 *.zip
+
+# Tencent Cloud EdgeOne
+.env
+.edgeone/*
+.tef_dist/*
+  

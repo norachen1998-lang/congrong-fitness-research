@@ -286,6 +286,10 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Content-Type', ctype)
         self.send_header('Content-Length', str(len(body)))
         self.send_header('Cache-Control', 'no-store')
+        # 允许部署在别的域名上的前端（如 EdgeOne）直接提交与读取数据
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
         for k, v in (extra or {}):
             self.send_header(k, v)
         self.end_headers()
@@ -293,6 +297,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def _json(self, code, obj):
         self._send(code, json.dumps(obj, ensure_ascii=False))
+
+    def do_OPTIONS(self):
+        self._send(204, b'', 'text/plain; charset=utf-8')
 
     def do_GET(self):
         url = urlparse(self.path)
