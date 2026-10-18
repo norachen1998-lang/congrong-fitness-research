@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#e7eee6">
+  <title>从容 · 网页素材板</title>
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./assets.css">
+</head>
+<body>
+  <main class="asset-board">
+    <div class="asset-nav"><a href="./index.html">← 返回网页原型</a><span>从容 / Web design system</span></div>
+    <header class="asset-hero"><span class="eyebrow">从设计稿到网页代码</span><h1>网页素材板</h1><p>下面的颜色、卡片、按钮、图标和信息组件均由 HTML、CSS 与 SVG 实现，可直接用于 iPad 页面。</p></header>
+
+    <section class="asset-section"><h2>01 / 色彩与层级</h2><p>参照设计稿的自然浅绿、深绿设备边框与柔和条件色。</p><div class="swatches">
+      <div class="swatch"><i style="background:#e7eee6"></i><strong>页面底色</strong><code>#E7EEE6</code></div>
+      <div class="swatch"><i style="background:#fffdf8"></i><strong>内容纸张</strong><code>#FFFDF8</code></div>
+      <div class="swatch"><i style="background:#2e3b34"></i><strong>设备外框</strong><code>#2E3B34</code></div>
+      <div class="swatch"><i style="background:#24604e"></i><strong>主操作绿</strong><code>#24604E</code></div>
+      <div class="swatch"><i style="background:#e5eddb"></i><strong>简单条件</strong><code>#E5EDDB</code></div>
+      <div class="swatch"><i style="background:#e0eaf4"></i><strong>第二入口</strong><code>#E0EAF4</code></div>
+    </div></section>
+
+    <section class="asset-section"><h2>02 / 网页原生图标</h2><p>使用可缩放 SVG 路径，不依赖截图或图标字体。</p><div class="icon-grid">
+      <div class="icon-card"><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="15" r="7"/><path d="M9 40c1-10 7-15 15-15s14 5 15 15"/></svg><span>参与者</span></div>
+      <div class="icon-card"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="9" width="36" height="25" rx="4"/><path d="M18 40h12M24 34v6M13 17h10M13 23h20"/></svg><span>研究者</span></div>
+      <div class="icon-card"><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="25" r="16"/><path d="M24 15v11l8 5M18 3h12"/></svg><span>计时</span></div>
+      <div class="icon-card"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="10" y="21" width="28" height="22" rx="4"/><path d="M16 21v-7a8 8 0 0 1 16 0v7M24 29v6"/></svg><span>私密反馈</span></div>
+      <div class="icon-card"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M7 20h8l10-9v26l-10-9H7zM31 17c5 4 5 11 0 15M35 11c9 7 9 19 0 26"/></svg><span>公开播报</span></div>
+      <div class="icon-card"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M9 9h30v30H9zM15 18h18M15 25h18M15 32h10"/></svg><span>问卷记录</span></div>
+    </div></section>
+
+    <section class="asset-section"><h2>03 / 参与者操作卡片</h2><div class="grid2"><div class="choice-card"><h3>Study 1 问卷调查 →</h3><p>了解您对器材智慧反馈的看法。</p></div><div class="choice-card blue"><h3>Study 2 器材体验 →</h3><p>分四个部分体验，每部分练习 1 分钟。</p></div></div><div class="actions"><button class="btn primary">主要操作</button><button class="btn">次要操作</button><button class="btn danger">退出研究</button></div></section>
+
+    <section class="asset-section"><h2>04 / 问卷与计时组件</h2><div class="demo-grid"><div class="page-card"><span class="pill">第 8 / 23 题</span><div class="progress"><span style="width:35%"></span></div><div class="question">使用这项功能，能帮助我达到锻炼的目的。</div><div class="likert"><div class="option">非常不同意<strong>1</strong></div><div class="option">不同意<strong>2</strong></div><div class="option selected">说不清<strong>3</strong></div><div class="option">同意<strong>4</strong></div><div class="option">非常同意<strong>5</strong></div></div></div><div class="page-card"><span class="pill">运动计时</span><h3>基础推手练习</h3><div class="timer">60 秒</div><p class="muted">按照自己的节奏进行；如有不适，请立即停止。</p></div></div></section>
+
+    <section class="asset-section"><h2>05 / 四种实验条件</h2><div class="grid2"><div class="condition A"><strong>A</strong> · 简单设置 × 私密反馈</div><div class="condition B"><strong>B</strong> · 复杂设置 × 私密反馈</div><div class="condition C"><strong>C</strong> · 简单设置 × 公开反馈</div><div class="condition D"><strong>D</strong> · 复杂设置 × 公开反馈</div></div></section>
+    <footer>编码素材仅供网页原型与设计迭代；正式收数前需核对伦理文本、现场设备和数据保存方案。</footer>
+  </main>
+</body>
+</html>
