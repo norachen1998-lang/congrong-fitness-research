@@ -9,6 +9,8 @@
 
 两种方式的接口与导出格式完全一致，前端无需改动。
 
+**源码仓库**：https://github.com/norachen1998-lang/congrong-fitness-research
+
 ## 目录
 
 | 路径 | 作用 |
@@ -36,6 +38,19 @@ python3 server.py          # 默认 3000 端口，可用 PORT=xxxx 指定
 
 ## 部署到 EdgeOne（线上链接）
 
+推荐走「从 Git 导入」，部署出的项目直接归属你的账号（不会有匿名项目到期被删的问题），之后推送自动重建：
+
+1. EdgeOne 控制台 → Pages → **新建项目 → 从 Git 导入** → 授权 GitHub → 选 `congrong-fitness-research` → 框架选「其他/静态」，构建命令留空，输出目录 `/`；
+2. **绑定 KV 命名空间**（必需，否则数据无处可存）：项目 → KV 存储 → 新建命名空间 → 绑定，**变量名填 `congrong_kv`**；
+3. 环境变量：`RESEARCH_TOKEN`（改研究者口令）、`KV_BINDING`（KV 用了别的变量名时）、`WEBHOOK_URL`（可选异地备份）。
+
+命令行部署（需 API Token）：`npm i -g edgeone && edgeone makers deploy -n <项目名> -t <API Token>`。
+
+---
+
+<details>
+<summary>另一种方式：在控制台手动创建项目并上传</summary>
+
 1. 在 [EdgeOne 控制台](https://console.cloud.tencent.com/edgeone/pages) 创建 Pages 项目；
 2. **绑定 KV 命名空间**（必需，否则数据无处可存）：
    控制台 → 项目 → KV 存储 → 新建命名空间 → 绑定到项目，**变量名填 `congrong_kv`**。
@@ -44,6 +59,8 @@ python3 server.py          # 默认 3000 端口，可用 PORT=xxxx 指定
 4. 部署（二选一）：
    - 命令行：`edgeone makers deploy -n <项目名> -t <API Token>`
    - 或把代码推到 Git 仓库，在控制台「从 Git 导入」，后续推送自动重新构建。
+
+</details>
 
 ## 数据是怎么回收的
 
