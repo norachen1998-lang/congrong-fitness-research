@@ -300,10 +300,36 @@ class Handler(BaseHTTPRequestHandler):
             self._json(200, {'ok': True, 'count': count_records()})
             return
         if path in ('/api/records', '/api/export.csv', '/api/export-items.csv',
-                    '/api/export.xlsx', '/api/export-raw.json'):
+                    '/api/export.xlsx', '/api/export-raw.json', '/api/export'):
             token = (query.get('token') or [''])[0]
             if token != load_token():
                 self._json(401, {'ok': False, 'error': '研究者口令不正确。'})
+                return
+            # 统一导出入口（与 EdgeOne Edge Functions 版共用同一套前端链接）
+            if path == '/api/export':
+                fmt = (query.get('format') or ['wide'])[0].lower()
+                stamp = datetime.now().strftime('%Y%m%d-%H%M')
+                if fmt == 'items':
+                    self._send(200, build_items_csv(), 'text/csv; charset=utf-8',
+                               [('Content-Disposition', f'attachment; filename="congrong-items-{stamp}.csv"')])
+                    return
+                records = read_records()
+                if fmt in ('json', 'raw'):
+                    self._send(200, json.dumps(records, ensure_ascii=False, indent=2),
+                               'application/json; charset=utf-8',
+                               [('Content-Disposition', f'attachment; filename="congrong-raw-{stamp}.json"')])
+                    return
+                if fmt in ('xlsx', 'excel'):
+                    data = build_xlsx(records)
+                    if data is None:
+                        self._json(500, {'ok': False, 'error': '服务器未安装 openpyxl，请改用 CSV 下载。'})
+                        return
+                    self._send(200, data,
+                               'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                               [('Content-Disposition', f'attachment; filename="congrong-data-{stamp}.xlsx"')])
+                    return
+                self._send(200, build_csv(records), 'text/csv; charset=utf-8',
+                           [('Content-Disposition', f'attachment; filename="congrong-records-{stamp}.csv"')])
                 return
             records = read_records()
             stamp = datetime.now().strftime('%Y%m%d-%H%M')

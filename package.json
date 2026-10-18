@@ -1,0 +1,7 @@
+{
+  "name": "congrong-fitness-study",
+  "version": "1.0.0",
+  "private": true,
+  "description": "从容 · 社区公园智慧健身研究：参与者界面 + 研究者数据回收（EdgeOne Edge Functions + KV）",
+  "type": "module"
+}
