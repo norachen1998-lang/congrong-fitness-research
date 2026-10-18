@@ -25,11 +25,13 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.environ.get('DATA_DIR', os.path.join(BASE, 'data'))
+# 数据默认写在项目目录之外（~/.congrong-fitness），避免被静态托管把口令/记录当文件公开下载
+DATA_DIR = os.environ.get('DATA_DIR') or os.path.join(os.path.expanduser('~'), '.congrong-fitness')
 os.makedirs(DATA_DIR, exist_ok=True)
 RECORDS = os.path.join(DATA_DIR, 'records.jsonl')
 TOKEN_FILE = os.path.join(DATA_DIR, 'token.txt')
 PORT = int(os.environ.get('PORT', '3000'))
+DEFAULT_TOKEN = 'congrong2026'
 WEBHOOK = os.environ.get('WEBHOOK_URL', '').strip()
 LOCK = threading.Lock()
 
@@ -90,11 +92,10 @@ def load_token():
     tok = os.environ.get('RESEARCH_TOKEN', '').strip()
     if tok:
         return tok
-    if not os.path.exists(TOKEN_FILE):
-        with open(TOKEN_FILE, 'w', encoding='utf-8') as f:
-            f.write('congrong2026')
-    with open(TOKEN_FILE, encoding='utf-8') as f:
-        return f.read().strip() or 'congrong2026'
+    if os.path.exists(TOKEN_FILE):
+        with open(TOKEN_FILE, encoding='utf-8') as f:
+            return f.read().strip() or DEFAULT_TOKEN
+    return DEFAULT_TOKEN
 
 
 def load_webhook():
@@ -418,7 +419,7 @@ class Handler(BaseHTTPRequestHandler):
 
 def main():
     print(f'从容研究服务启动：0.0.0.0:{PORT}  数据文件：{RECORDS}', flush=True)
-    print(f'研究者口令：{load_token()}（可在 data/token.txt 修改）', flush=True)
+    print(f'研究者口令：{load_token()}（设置环境变量 RESEARCH_TOKEN 可修改）', flush=True)
     ThreadingHTTPServer.daemon_threads = True
     ThreadingHTTPServer(('0.0.0.0', PORT), Handler).serve_forever()
 
