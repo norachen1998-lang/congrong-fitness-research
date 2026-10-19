@@ -61,8 +61,9 @@ function queueEvent(ev){
 let lastProgressSig='', lastProgressAt=0;
 function progressSig(p){
   const parts=(p.s2&&p.s2.parts)||[];
-  return JSON.stringify([p.id,state.view,(p.s1&&p.s1.answers||[]).length,
-    parts.length,parts.map(x=>x.status).join(','),(p.s1&&p.s1.status)||'']);
+  const s1=p.s1||{};
+  return JSON.stringify([p.id,state.view,s1.status,s1.answers,s1.reasons,s1.background,s1.usage,
+    parts.map(x=>[x.status,x.condition,x.observerActual,x.meters,x.seconds,x.rank,x.answers])]);
 }
 function scheduleSync(){
   clearTimeout(syncTimer);
