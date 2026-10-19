@@ -383,8 +383,37 @@ class Handler(BaseHTTPRequestHandler):
         with open(full, 'rb') as f:
             self._send(200, f.read(), MIME.get(ext, 'application/octet-stream'))
 
+    def _reset(self):
+        """清空全部回收数据（需研究者口令），用于正式收数前清除测试记录。"""
+        try:
+            length = int(self.headers.get('Content-Length') or 0)
+        except ValueError:
+            length = 0
+        token = ''
+        if length > 0:
+            try:
+                payload = json.loads(self.rfile.read(length).decode('utf-8'))
+                token = str((payload or {}).get('token', '')).strip()
+            except (ValueError, UnicodeDecodeError):
+                token = ''
+        if token != load_token():
+            self._json(401, {'ok': False, 'error': '研究者口令不正确。'})
+            return
+        with LOCK:
+            try:
+                if os.path.exists(RECORDS):
+                    os.remove(RECORDS)
+            except OSError as exc:
+                self._json(500, {'ok': False, 'error': f'清空失败：{exc}'})
+                return
+        self._json(200, {'ok': True, 'count': 0})
+
     def do_POST(self):
-        if urlparse(self.path).path != '/api/submit':
+        path = urlparse(self.path).path
+        if path == '/api/reset':
+            self._reset()
+            return
+        if path != '/api/submit':
             self._json(404, {'ok': False, 'error': '接口不存在。'})
             return
         try:

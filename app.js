@@ -57,7 +57,23 @@ function queueEvent(ev){
   const a=readOutbox();a.push({...ev,clientAt:new Date().toISOString()});writeOutbox(a);
   clearTimeout(syncTimer);syncTimer=setTimeout(flushOutbox,150);
 }
-function scheduleSync(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>{const p=person();if(p)queueEvent({type:'progress',id:p.id,person:JSON.parse(JSON.stringify(p)),view:state.view});},1200);}
+/* 进度上传节流：内容没实质变化时不要反复回传，避免产生海量重复记录 */
+let lastProgressSig='', lastProgressAt=0;
+function progressSig(p){
+  const parts=(p.s2&&p.s2.parts)||[];
+  return JSON.stringify([p.id,state.view,(p.s1&&p.s1.answers||[]).length,
+    parts.length,parts.map(x=>x.status).join(','),(p.s1&&p.s1.status)||'']);
+}
+function scheduleSync(){
+  clearTimeout(syncTimer);
+  syncTimer=setTimeout(()=>{
+    const p=person();if(!p)return;
+    const sig=progressSig(p), now=Date.now();
+    if(sig===lastProgressSig && now-lastProgressAt<20000)return;
+    lastProgressSig=sig;lastProgressAt=now;
+    queueEvent({type:'progress',id:p.id,person:JSON.parse(JSON.stringify(p)),view:state.view});
+  },1200);
+}
 async function flushOutbox(){
   const a=readOutbox();sync.pending=a.length;
   if(!a.length){updateSyncBadge();return Promise.resolve();}
@@ -206,7 +222,7 @@ function render(){
     const records=onlineData?.records||[], agg={};
     records.forEach(r=>{if(!r.id||!r.person)return;const cur=agg[r.id];if(!cur||(r.receivedAt||'')>=(cur.receivedAt||''))agg[r.id]=r;});
     const rows=Object.values(agg).reverse();
-    html=admin(`<span class="eyebrow">研究者界面</span><h1 class="h1">在线回收数据</h1><p class="copy muted">参与者每答一题就会向服务器回传一次进度；断网时先存在本机，联网后自动补传。</p><div class="mini-grid"><div class="mini">服务器累计事件<strong>${onlineData?onlineData.count:'—'}</strong></div><div class="mini">已回收参与者<strong>${rows.length}</strong></div><div class="mini">本机待上传<strong>${queued}</strong></div></div><div class="field" style="max-width:360px"><label>研究者口令</label><input id="token-input" type="password" autocomplete="current-password" placeholder="请输入口令" value="${esc(token)}"></div><div class="actions">${act('save-token','保存口令并读取','','btn primary')}${act('online-refresh','重新读取')}${act('flush','立即上传本机队列')}</div><div class="error">${esc(onlineError||sync.error)}</div>${onlineBusy?'<p class="copy muted">正在读取服务器…</p>':''}<div class="table-wrap"><table class="data-table"><thead><tr><th>编号</th><th>Study 1</th><th>Study 2</th><th>完成次数</th><th>最后回收时间</th></tr></thead><tbody>${rows.map(r=>{const pp=r.person,ss1=pp.s1||{},ss2=pp.s2||{},parts=ss2.parts||[];return `<tr><td>${esc(r.id)}</td><td>${statusText(ss1.status||'')}</td><td>${statusText(ss2.status||'')}</td><td>${parts.filter(z=>z.status==='complete').length} / ${parts.length}</td><td>${esc(String(r.receivedAt||'').replace('T',' ').slice(0,19))}</td></tr>`;}).join('')||'<tr><td colspan="5">服务器上还没有数据</td></tr>'}</tbody></table></div><div class="actions">${token?`<a class="btn" href="${apiRoot()}/api/export?format=wide&token=${encodeURIComponent(token)}">下载 CSV 宽表</a><a class="btn" href="${apiRoot()}/api/export?format=items&token=${encodeURIComponent(token)}">下载题项对照表</a><a class="btn" href="${apiRoot()}/api/export?format=xlsx&token=${encodeURIComponent(token)}">下载 Excel（三张表）</a><a class="btn" href="${apiRoot()}/api/export?format=json&token=${encodeURIComponent(token)}">下载原始 JSON</a>`:''}${act('records','查看本机记录')}</div><p class="tiny">服务端按事件保存每条记录（自托管版为数据文件；EdgeOne 版存在 KV 中）。请定期下载备份；口令只存在本机浏览器。</p><p class="tiny">当前数据回收接口：<strong>${esc(apiRoot()==="."?"同源（本站）":apiRoot())}</strong>${apiRoot()==="."?"":"（本站未绑定存储，已自动切换到备用研究服务器）"}</p>${notice()}`,'online');
+    html=admin(`<span class="eyebrow">研究者界面</span><h1 class="h1">在线回收数据</h1><p class="copy muted">参与者每答一题就会向服务器回传一次进度；断网时先存在本机，联网后自动补传。</p><div class="mini-grid"><div class="mini">服务器累计事件<strong>${onlineData?onlineData.count:'—'}</strong></div><div class="mini">已回收参与者<strong>${rows.length}</strong></div><div class="mini">本机待上传<strong>${queued}</strong></div></div><div class="field" style="max-width:360px"><label>研究者口令</label><input id="token-input" type="password" autocomplete="current-password" placeholder="请输入口令" value="${esc(token)}"></div><p class="tiny" id="token-tip"></p><div class="actions">${act('save-token','保存口令并读取','','btn primary')}${act('online-refresh','重新读取')}${act('flush','立即上传本机队列')}${token?act('reset-server','清空服务器数据'):''}</div><div class="error">${esc(onlineError||sync.error)}</div>${onlineBusy?'<p class="copy muted">正在读取服务器…</p>':''}<div class="table-wrap"><table class="data-table"><thead><tr><th>编号</th><th>Study 1</th><th>Study 2</th><th>完成次数</th><th>最后回收时间</th></tr></thead><tbody>${rows.map(r=>{const pp=r.person,ss1=pp.s1||{},ss2=pp.s2||{},parts=ss2.parts||[];return `<tr><td>${esc(r.id)}</td><td>${statusText(ss1.status||'')}</td><td>${statusText(ss2.status||'')}</td><td>${parts.filter(z=>z.status==='complete').length} / ${parts.length}</td><td>${esc(String(r.receivedAt||'').replace('T',' ').slice(0,19))}</td></tr>`;}).join('')||'<tr><td colspan="5">服务器上还没有数据</td></tr>'}</tbody></table></div><div class="actions">${token?`<a class="btn" href="${apiRoot()}/api/export?format=wide&token=${encodeURIComponent(token)}">下载 CSV 宽表</a><a class="btn" href="${apiRoot()}/api/export?format=items&token=${encodeURIComponent(token)}">下载题项对照表</a><a class="btn" href="${apiRoot()}/api/export?format=xlsx&token=${encodeURIComponent(token)}">下载 Excel（三张表）</a><a class="btn" href="${apiRoot()}/api/export?format=json&token=${encodeURIComponent(token)}">下载原始 JSON</a>`:''}${act('records','查看本机记录')}</div><p class="tiny">服务端按事件保存每条记录（自托管版为数据文件；EdgeOne 版存在 KV 中）。请定期下载备份；口令只存在本机浏览器。</p><p class="tiny">当前数据回收接口：<strong>${esc(apiRoot()==="."?"同源（本站）":apiRoot())}</strong>${apiRoot()==="."?"":"（本站未绑定存储，已自动切换到备用研究服务器）"}</p>${notice()}`,'online');
   }
   else if(v==='consent1'||v==='consent2') html=panel(`${hero('参加前请先确认','这里是流程演示，没有放入正式的研究同意书。','研究说明')}<div class="summary">研究目的、负责单位、联系人、数据保留期限、退出和删除方式，均须以最终获批的伦理审查版本为准。</div>${notice()}<div class="actions">${act('home','返回首页')}${act('consent-next','我明白这是演示，继续','','btn primary')}</div>`);
   else if(v==='background') html=panel(`${hero('先了解一点基本情况','请按实际情况选择；演示版不要求姓名或电话号码。','Study 1 · 背景')}<div class="grid2"><div class="field"><label>年龄段</label><select data-field="age"><option value="">请选择</option>${['50–59 岁','60–69 岁','70–79 岁','80 岁及以上','不愿回答'].map(y=>`<option ${p.s1.background.age===y?'selected':''}>${y}</option>`).join('')}</select></div><div class="field"><label>您平时使用手机或平板的频率</label><select data-field="device"><option value="">请选择</option>${['几乎不用','偶尔使用','每周多次','每天使用'].map(y=>`<option ${p.s1.background.device===y?'selected':''}>${y}</option>`).join('')}</select></div></div><div class="error">${esc(state.error)}</div><div class="actions end">${act('background-next','继续','','btn primary')}</div>`);
@@ -255,6 +271,17 @@ function render(){
   if(v==='timer'||v==='rest')tick();
 }
 
+app.addEventListener('input',e=>{
+  if(e.target.id!=='token-input')return;
+  localStorage.setItem(TOKENKEY,e.target.value||'');
+  const tip=document.getElementById('token-tip');
+  if(tip)tip.textContent=e.target.value?'已记在本机，按回车或点「保存口令并读取」':'';
+});
+app.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&e.target.id==='token-input'){
+    localStorage.setItem(TOKENKEY,e.target.value||'');loadOnline();
+  }
+});
 app.addEventListener('change',e=>{
   const p=person();if(!p)return;
   if(e.target.dataset.field){const f=e.target.dataset.field;if(['age','device'].includes(f))p.s1.background[f]=e.target.value;else p.s1.usage[f]=e.target.value;save();}
@@ -265,6 +292,15 @@ app.addEventListener('click',e=>{
   const a=b.dataset.action;let p=person();const x=part();
   if(a==='welcome'||a==='home'||a==='admin'||a==='records'||a==='online'){state.mode=a==='home'||a==='welcome'?'participant':'researcher';go(a);if(a==='online')loadOnline();return;}
   if(a==='save-token'){localStorage.setItem(TOKENKEY,document.querySelector('#token-input')?.value||'');loadOnline();return;}
+  if(a==='reset-server'){
+    if(!confirm('确定清空服务器上的全部回收数据？此操作不可恢复。建议先导出 CSV / Excel 备份。'))return;
+    onlineBusy=true;onlineError='';render();
+    fetch(`${apiRoot()}/api/reset`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:localStorage.getItem(TOKENKEY)||''})})
+      .then(r=>r.json().then(d=>({ok:r.ok,d})))
+      .then(({ok,d})=>{if(!ok)throw new Error(d&&d.error||'清空失败');onlineBusy=false;loadOnline();})
+      .catch(err=>{onlineBusy=false;onlineError='清空失败：'+err.message;render();});
+    return;
+  }
   if(a==='online-refresh'){loadOnline();return;}
   if(a==='flush'){flushOutbox();render();return;}
   if(a==='new-person'){createPerson();return;}

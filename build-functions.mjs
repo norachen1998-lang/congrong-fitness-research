@@ -12,7 +12,7 @@ const lib = readFileSync(join(base, 'functions-src/lib.js'), 'utf-8');
 const outDir = join(base, 'edge-functions/api');
 mkdirSync(outDir, { recursive: true });
 
-const targets = ['submit', 'status', 'records', 'export'];
+const targets = ['submit', 'status', 'records', 'export', 'reset'];
 for (const name of targets) {
   const handler = readFileSync(join(base, `functions-src/handlers/${name}.js`), 'utf-8');
   const banner = `/* 自动生成，请勿直接编辑：源文件在 functions-src/（运行 node build-functions.mjs 重新生成） */\n`;
